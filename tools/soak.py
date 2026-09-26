@@ -54,20 +54,20 @@ def free_port() -> int:
 def start_server(db: Path, pki_dir: Path, port: int, renew_days: float) -> subprocess.Popen:
     env = {k: v for k, v in os.environ.items() if not k.startswith("COORD_")}
     env["PYTHONPATH"] = str(REPO)
+    # the server's output goes to a file, never a pipe: nobody drains a pipe, so its
+    # logs would be lost - and a full pipe would wedge every request that logs
+    logf = open(db.parent / "server.log", "w", encoding="utf-8")
     proc = subprocess.Popen(
         [sys.executable, "-m", "coordination.server", "--port", str(port), "--db", str(db),
          "--pki", str(pki_dir), "--renew-after-days", str(renew_days)],
-        cwd=str(REPO), env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    assert proc.stdout is not None
+        cwd=str(REPO), env=env, stdout=logf, stderr=subprocess.STDOUT)
     deadline = time.time() + 60
     while time.time() < deadline:
-        line = proc.stdout.readline()
-        if not line:
-            break
-        if "coord-server on" in line:
-            return proc
+        time.sleep(0.5)
         if proc.poll() is not None:
-            raise SystemExit(f"server exited: {line}")
+            raise SystemExit(f"server exited (see {logf.name})")
+        if "coord-server on" in Path(logf.name).read_text(encoding="utf-8", errors="replace"):
+            return proc
     raise SystemExit("server did not start")
 
 
@@ -166,7 +166,27 @@ def worker(i: int, url: str, ca: str, crt: str, key: str, stop: threading.Event,
             stats["startup_error"] = f"agent{i} whoami: {type(e).__name__}: {e}"
         return
     n = 0
+    last_hb = 0.0
     while not stop.is_set():
+        # a session dies after 30 min without a heartbeat (SESSION_TTL): a real agent polls
+        # about every 5 min, so do the same - otherwise every op fails past t+1800s and the
+        # run measures a dead fleet instead of a working one
+        if time.monotonic() - last_hb > 240:
+            try:
+                rc.heartbeat(session=sid, status=f"soak {i} tick {n}")
+            except CoordError as e:
+                err = e.code
+            except Exception as e:
+                err = type(e).__name__
+            else:
+                err = None
+            with lock:
+                s = stats.setdefault("heartbeat", {"n": 0, "ms": [], "err": {}})
+                s["n"] += 1
+                if err:
+                    s["err"][err] = s["err"].get(err, 0) + 1
+                    stats["errors"] = stats.get("errors", 0) + 1
+            last_hb = time.monotonic()
         for op in ("claim", "post", "locks"):
             t0 = time.perf_counter()
             err = None
