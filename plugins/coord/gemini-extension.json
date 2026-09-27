@@ -1,5 +1,5 @@
 {
   "name": "coord",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "Coordinate concurrent agent sessions through the coord server: claims on files/dirs, direct questions that keep your claim, messages, tasks, discussions, documents. Ships its own JS client (Node >= 20); mTLS bundles and Keycloak SSO."
 }

@@ -119,6 +119,8 @@ NEWS = {
     "0.12.0": "coord doc import <file>: a .txt/.md note lands as a source document pending review, with its "
               "provenance - the original kept as revision 1, sha256 fingerprint, declared author separate "
               "from the depositor, context and AI-assisted flag; nothing inside it runs until validated",
+    "0.13.3": "tasks can ask for a human ack: task create --human-ack, closed in one click from "
+             "the UI (task ack) - including work no live session can otherwise close",
     "0.13.2": "a session cannot join as another CLI's family (`whoami claude` from Muse is refused) and "
               "Muse/opencode sessions must name their model (`--model spark-1.3`, `luna-6`)",
     "0.13.1": "choices go to coord, not the console (skill, README, agent guide: a decision is a "

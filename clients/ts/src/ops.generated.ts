@@ -2,7 +2,7 @@
 
 export const ENUMS = {"message_kinds":["info","question","advice","proposal","decision","review","warning","done"],"roles":["advisor","reviewer","coeditor","delegate"],"project_roles":["viewer","contributor","decider","admin"],"stances":["support","support-with-reservation","object","abstain","need-more-info"],"doc_kinds":["note","diagnosis","plan","proposal","decision","review","adr"],"note_contexts":["reflection","discussion","meeting","other"],"memory_kinds":["strategy","overview","convention","architecture","decision","pitfall","glossary","policy"],"consensus_rules":["unanimous","majority","no-objection","weighted","advisory","owner"],"routine_statuses":["active","paused","retired"],"routine_outcomes":["ok","issues","failed"],"message_priorities":["low","normal","high","urgent"],"ack_states":["read","taken","done","declined"],"contact_policies":["open","auto","contacts_only","block_all"],"doc_visibility":["project","private"],"link_types":["blocks","enables","related_to","duplicates","part_of"],"suggestion_targets":["task","decision","memory","question","summary"],"suggestion_natures":["fact","hypothesis","opinion","decision"],"session_states":["active","idle","paused","ended","unreachable"],"wake_reasons":["task","message","question","unblocked","review","other"],"mandate_powers":["decide","reassign","release_claims"]} as const;
 
-export const CLIENT_VERSION = "0.13.2";   // package.json: compared with the server's in whoami
+export const CLIENT_VERSION = "0.13.3";   // package.json: compared with the server's in whoami
 
 export interface OpArgs {
   ack: { session: string; message: number; state?: string; note?: string; };

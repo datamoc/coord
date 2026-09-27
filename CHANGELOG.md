@@ -7,6 +7,10 @@ when it starts on a newer version. Dates are commit dates.
 
 ## Unreleased
 
+Nothing yet.
+
+## 0.13.3 — 2026-09-27
+
 - **Tasks can ask for a human ack**: `coord task create "..." --human-ack` records that
   closing the task is the human's call. It shows an acknowledge/close button in the UI
   (plus a `needs a human ack` tag in the task list), and `coord task ack T3 ["note"]`

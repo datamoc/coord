@@ -1,6 +1,6 @@
 {
   "name": "@datamoc/coord-client",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "TypeScript client and `coord` CLI for the coord coordination server (claims, messages, tasks, documents; mTLS bundles with automatic renewal, Keycloak SSO)",
   "type": "module",
   "license": "AGPL-3.0-only",
