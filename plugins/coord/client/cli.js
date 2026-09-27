@@ -164,7 +164,7 @@ const COMMANDS = {
             s("--assigned")] },
     task: { sub: {
             create: { pos: [{ name: "title" }], opts: [s("--description", { default: "" }), i("--priority", { default: 0 }), s("--claim"),
-                    s("--assign"), s("--category"), s("--after")] },
+                    s("--assign"), s("--category"), s("--after"), b("--human-ack")] },
             update: { help: "edit what a task says - title, description, priority, category (creator, assignee or decider); status keeps its own path: accept, done, decline, cancel",
                 pos: [{ name: "task" }], opts: [s("--title"), s("--description"), i("--priority"), s("--category")] },
             link: { help: "T3 after T1,T2: T3 cannot be accepted until they are done (--remove to unlink); context without blocking: --type enables (T1 enables T3), related_to, duplicates, part_of (T3 part_of T1)",
@@ -174,6 +174,8 @@ const COMMANDS = {
                 pos: [{ name: "task" }, { name: "reason" }], opts: [s("--after", { required: true })] },
             accept: { pos: [{ name: "task" }] },
             done: { pos: [{ name: "task" }, { name: "note", nargs: "?", default: "" }] },
+            ack: { help: "close a task created with --human-ack in one step (any participant; the UI button calls this)",
+                pos: [{ name: "task" }, { name: "note", nargs: "?", default: "" }] },
             decline: { pos: [{ name: "task" }, { name: "reason", nargs: "?", default: "" }] },
             show: { pos: [{ name: "task" }] },
             cancel: { pos: [{ name: "task" }, { name: "note", nargs: "?", default: "" }] },
@@ -568,7 +570,8 @@ export async function run(path, a, c) {
             switch (path[1]) {
                 case "create": return ["task", await call("task_create", { session: S(), title: a.title, description: a.description, priority: a.priority,
                         claim: a.claim, assign: a.assign, category: a.category,
-                        after: list(a.after), client_id: uuid() }), 0];
+                        after: list(a.after), human_ack: a.human_ack,
+                        client_id: uuid() }), 0];
                 case "update": return ["task", await call("task_update", { session: S(), task: a.task, title: a.title,
                         description: a.description, priority: a.priority,
                         category: a.category }), 0];
@@ -576,6 +579,7 @@ export async function run(path, a, c) {
                         type: a.type, condition: a.condition, reason: a.reason }), 0];
                 case "waive": return ["task", await call("task_waive", { session: S(), task: a.task, after: a.after, reason: a.reason }), 0];
                 case "accept": return ["task", await call("task_accept", { session: S(), task: a.task }), 0];
+                case "ack": return ["task", await call("task_ack", { session: S(), task: a.task, note: a.note }), 0];
                 case "show": return ["task", await call("task_get", { task: a.task, session: maybeS() }), 0];
                 case "decline": return ["task", await call("task_decline", { session: S(), task: a.task, reason: a.reason }), 0];
                 case "cancel": return ["task", await call("task_cancel", { session: S(), task: a.task, note: a.note }), 0];

@@ -87,8 +87,9 @@ export interface OpArgs {
   suggestion_review: { session: string; suggestion: string; accept: boolean; note?: string; title?: string | null; body?: string | null; };
   suggestions: { project?: string | null; source?: string | null; status?: string | null; session?: string | null; };
   task_accept: { session: string; task: string; };
+  task_ack: { session: string; task: string; note?: string; };
   task_cancel: { session: string; task: string; note?: string; };
-  task_create: { session: string; title: string; description?: string; priority?: number; claim?: string | null; assign?: string | null; category?: string | null; after?: string[] | null; client_id?: string | null; };
+  task_create: { session: string; title: string; description?: string; priority?: number; claim?: string | null; assign?: string | null; category?: string | null; after?: string[] | null; client_id?: string | null; human_ack?: boolean; };
   task_decline: { session: string; task: string; reason?: string; };
   task_done: { session: string; task: string; note?: string; };
   task_get: { task: string; session?: string | null; };
@@ -854,6 +855,14 @@ export const OPS: Record<OpName, { kind: "read" | "write"; params: readonly stri
    "task"
   ]
  },
+ "task_ack": {
+  "kind": "write",
+  "params": [
+   "session",
+   "task",
+   "note"
+  ]
+ },
  "task_cancel": {
   "kind": "write",
   "params": [
@@ -873,7 +882,8 @@ export const OPS: Record<OpName, { kind: "read" | "write"; params: readonly stri
    "assign",
    "category",
    "after",
-   "client_id"
+   "client_id",
+   "human_ack"
   ]
  },
  "task_decline": {

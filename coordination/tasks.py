@@ -185,18 +185,20 @@ class TasksMixin(CoordBase):
 
     def task_create(self, session: str, title: str, description: str = "", priority: int = 0,
                     claim: str | None = None, assign: str | None = None, category: str | None = None,
-                    after: list[str] | None = None, client_id: str | None = None) -> dict:
+                    after: list[str] | None = None, client_id: str | None = None,
+                    human_ack: bool = False) -> dict:
         def fn(db):
             me, _ = self._access(db, session, None, "participate")
             target = self._resolve_name(db, assign, me["project_id"]) if assign else None
             now = self.clock()
             tid = db.execute("INSERT INTO tasks(project_id, created_by, assigned_to, assigned_name, title,"
-                             " description, status, priority, related_claim_id, category, created_at,"
-                             " updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                             " description, status, priority, related_claim_id, category, human_ack, created_at,"
+                             " updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                              (me["project_id"], me["display_name"], target["session_id"] if target else None,
                               target["display_name"] if target else None, title, description,
                               "offered" if target else "open", int(priority),
-                              parse_id("claim", claim) if claim else None, category, now, now)).lastrowid
+                              parse_id("claim", claim) if claim else None, category, 1 if human_ack else 0,
+                              now, now)).lastrowid
             self._link(db, me["project_id"], tid, after or [], session)
             if target:   # an offer, not an order: the assignee accepts or declines
                 self._notify(db, me, target["session_id"],
@@ -211,7 +213,8 @@ class TasksMixin(CoordBase):
         d = {"task": f"T{r['task_id']}", "title": r["title"], "status": r["status"], "kind": r["kind"],
              "priority": r["priority"], "assigned": r["assigned_name"], "created_by": r["created_by"],
              "claim": f"C{r['related_claim_id']}" if r["related_claim_id"] else None,
-             "category": r["category"], "after": [f"T{x}" for x in after],
+             "category": r["category"], "human_ack": bool(r["human_ack"]),
+             "after": [f"T{x}" for x in after],
              "blocked_by": [f"T{x}" for x in blocked], "project": r["project_id"],
              "ready": r["kind"] == "task" and r["status"] in ("open", "offered", "accepted") and not blocked}
         links = self._typed_links(db, r["task_id"])
@@ -371,6 +374,7 @@ class TasksMixin(CoordBase):
                    "downstream": len(down), "milestones": milestones, "messages": msgs, "source": source,
                    "status": r["status"], "priority": r["priority"], "assigned": r["assigned_name"],
                    "created_by": r["created_by"], "note": r["note"], "category": r["category"],
+                   "human_ack": bool(r["human_ack"]),
                    "ready": r["kind"] == "task" and r["status"] in ("open", "offered", "accepted") and not blocked,
                    "claim": f"C{r['related_claim_id']}" if r["related_claim_id"] else None,
                    "created_at": iso(r["created_at"]), "updated_at": iso(r["updated_at"])}
@@ -736,3 +740,31 @@ class TasksMixin(CoordBase):
 
     def task_done(self, session: str, task: str, note: str = "") -> dict:
         return self._task_update(session, task, "done", note, require_assignee=True)
+
+    def task_ack(self, session: str, task: str, note: str = "") -> dict:
+        """Close a task that asked for a human ack, in one step: any participant may call it -
+        the human's acknowledge/close button in the UI calls this, not accept then done. It also
+        unsticks work no live session can otherwise close (an assignee that is gone while the
+        creator is still around, so the orphaned path does not apply). Only tasks created with
+        `human_ack` close this way; anything else keeps its own path."""
+        with self._tx() as db:
+            tid = parse_id("task", task)
+            t = db.execute("SELECT * FROM tasks WHERE task_id=?", (tid,)).fetchone()
+            if t is None:
+                raise CoordError("missing", f"no task T{tid}")
+            me, _ = self._access(db, session, t["project_id"], "participate")
+            if t["kind"] == "milestone":
+                raise CoordError("milestone", f"T{tid} is a milestone: it is reached when its criteria are met "
+                                 f"(coord milestone reach T{tid}), not acknowledged")
+            if not t["human_ack"]:
+                raise CoordError("bad_args", f"T{tid} does not ask for a human ack -"
+                                 " accept it and finish it with coord task done")
+            if t["status"] in ("done", "cancelled"):
+                raise CoordError("not_cancelable", f"T{tid} is already {t['status']}")
+            note = note or f"acknowledged by {me['display_name']}"
+            db.execute("UPDATE tasks SET status='done', assigned_to=COALESCE(assigned_to, ?),"
+                       " assigned_name=COALESCE(assigned_name, ?), note=?, updated_at=?"
+                       " WHERE task_id=?", (session, me["display_name"], note, self.clock(), tid))
+            self._event(db, t["project_id"], "task.acked", session, "task", tid)
+            self._unblock_dependents(db, me, tid)
+            return {"task": f"T{tid}", "status": "done"}

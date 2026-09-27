@@ -91,7 +91,7 @@ FEATURES = ("sessions", "messages", "claims", "fences", "roles", "discussions", 
             "server-info", "wake-hints", "delegation-scopes", "reservations", "superseding", "event-stream", "ui", "task-graph",
             "project-permissions", "note-import", "note-review", "receipts", "priorities", "contact-policies",
             "session-states", "wake-requests", "dashboard", "activity", "weighted-votes", "crisis-authority",
-            "policies", "typed-links", "milestones", "resource-claims")
+            "policies", "typed-links", "milestones", "resource-claims", "task-human-ack")
 # What each release brought agents: announced to every project when the server starts on a newer version.
 NEWS = {
     "0.4.0": "one certificate per agent CLI; plugins for Muse, Gemini, Qwen, opencode, Kilo and Crush",
@@ -547,6 +547,7 @@ class CoordBase:
         ("tasks", "reached_at", "REAL"),
         ("tasks", "owner", "TEXT"),
         ("tasks", "suggestion_id", "INTEGER"),                       # promoted from a candidate (provenance)
+        ("tasks", "human_ack", "INTEGER NOT NULL DEFAULT 0"),         # created with --human-ack: a human closes it
         ("claims", "resource", "TEXT"),                              # NULL: a file scope; else gpu, build, port...
     )
 

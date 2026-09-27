@@ -2619,6 +2619,29 @@
     }
    ]
   },
+  "task_ack": {
+   "kind": "write",
+   "params": [
+    {
+     "name": "session",
+     "type": "string",
+     "nullable": false,
+     "required": true
+    },
+    {
+     "name": "task",
+     "type": "string",
+     "nullable": false,
+     "required": true
+    },
+    {
+     "name": "note",
+     "type": "string",
+     "nullable": false,
+     "required": false
+    }
+   ]
+  },
   "task_cancel": {
    "kind": "write",
    "params": [
@@ -2697,6 +2720,12 @@
      "name": "client_id",
      "type": "string",
      "nullable": true,
+     "required": false
+    },
+    {
+     "name": "human_ack",
+     "type": "boolean",
+     "nullable": false,
      "required": false
     }
    ]

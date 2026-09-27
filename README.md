@@ -556,7 +556,10 @@ https://...` registers an A2A push webhook (below). Orphaned (both the
 creator's and the assignee's sessions gone past their TTL, not just briefly
 offline): decline/done/cancel open up to any live session, so a stale or
 superseded task does not block its dependents forever - the note records it
-was closed this way.
+was closed this way. A task created with `--human-ack` asks a human to close it: it
+shows an acknowledge/close button in the UI (`task ack T3 ["note"]` does the same
+in one step, from any participant), so closures that are the human's call by design -
+and work no live session can otherwise close - finish in one click.
 
 **Consensus — computed, never declared.** `discuss "topic" [--with rev-01,ops-01]
 [--rule unanimous|majority|no-objection] [--quorum N] [--deadline 48h|<ISO date>]`

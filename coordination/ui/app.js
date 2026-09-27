@@ -149,6 +149,7 @@ function renderTasks(list) {
   fill($("tasks"), shown.map((t) => el("li", { title: t.title }, el("div", { class: "clamp" },
       el("a", { class: "link", onclick: act(() => openTask(t.task)) }, el("span", { class: "id" }, t.task)), t.title),
     t.kind === "milestone" ? el("span", { class: "tag" }, "milestone") : null,
+    t.human_ack ? el("span", { class: "tag" }, "needs a human ack") : null,
     el("span", { class: `tag${t.blocked_by?.length ? " due" : ""}` }, t.blocked_by?.length ? `blocked by ${t.blocked_by.join(", ")}` : t.ready ? "ready" : t.status),
     t.assigned ? el("span", { class: "tag" }, t.assigned) : null,
     !t.blocked_by?.length && t.after?.length ? el("span", { class: "tag" }, `after ${t.after.join(", ")}`) : null)), "nothing here");
@@ -275,7 +276,7 @@ function showText(title, meta, body, extra = []) {
 /** A task's card: its exact blockage, its links, its conversation, where it came from - and the graph edits. */
 async function openTask(id) {
   const t = await call("task_get", { task: id });
-  const lines = [`${t.title} [${t.kind === "milestone" ? "milestone, " : ""}${t.status}${t.ready ? ", ready" : ""}] ${t.assigned ? `- ${t.assigned}` : ""}`,
+  const lines = [`${t.title} [${t.kind === "milestone" ? "milestone, " : ""}${t.status}${t.ready ? ", ready" : ""}] ${t.assigned ? `- ${t.assigned}` : ""}${t.human_ack ? " - needs a human ack" : ""}`,
     t.description || "", "",
     ...t.prerequisites.map((p) => `waits for ${p.task} [${p.status}] ${p.title}${p.project !== t.project ? ` (${p.project})` : ""}`
       + (p.condition ? ` - condition: ${p.condition}` : "") + (p.waived_by ? ` - WAIVED by ${p.waived_by}: ${p.waive_reason}` : "")),
@@ -298,6 +299,12 @@ async function openTask(id) {
       const why = prompt(`Remove the link ${t.task} after ${p.task} - why?`, "");
       if (why) { await call("task_link", { task: t.task, after: [p.task], remove: true, reason: why }); await openTask(id); }
     }) }, `Unlink ${p.task}`)),
+    ...(t.human_ack && t.status !== "done" && t.status !== "cancelled" ? [el("button", { class: "small", type: "button",
+      onclick: act(async () => {
+        const note = prompt(`Acknowledge and close ${t.task} - note (empty keeps who closed it):`, "");
+        if (note === null) return;
+        await call("task_ack", { task: t.task, note }); await openTask(id);
+      }) }, "Acknowledge & close")] : []),
   ];
   showText(`${t.task} · ${t.project}`, `created by ${t.created_by} · ${t.created_at}`, lines.join("\n"), [el("div", { class: "row" }, ...buttons)]);
 }

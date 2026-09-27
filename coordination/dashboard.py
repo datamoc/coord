@@ -21,6 +21,7 @@ PHRASES = {
     "claim.acquired": "claimed {scope}", "claim.released": "released C{id}", "claim.renewed": "renewed C{id}",
     "task.created": "created task T{id}", "task.accepted": "accepted T{id}", "task.done": "completed T{id}",
     "task.cancelled": "cancelled T{id}", "task.declined": "declined T{id}", "task.unblocked": "unblocked T{id}",
+    "task.acked": "acknowledged T{id}",
     "task.updated": "updated T{id} ({fields})",
     "task.linked": "linked T{id} ({type})", "task.unlinked": "unlinked T{id} ({type}): {reason}",
     "task.waived": "waived T{id}'s wait for {after}: {reason}",

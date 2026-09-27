@@ -7,7 +7,13 @@ when it starts on a newer version. Dates are commit dates.
 
 ## Unreleased
 
-Nothing yet.
+- **Tasks can ask for a human ack**: `coord task create "..." --human-ack` records that
+  closing the task is the human's call. It shows an acknowledge/close button in the UI
+  (plus a `needs a human ack` tag in the task list), and `coord task ack T3 ["note"]`
+  closes it in one step from any participant - no accept/done dance. It also unsticks
+  work no live session can otherwise close (an assignee gone while the creator is still
+  around, where the orphaned path does not apply). Anything else keeps its own path:
+  `task ack` on an ordinary task is refused.
 
 ## 0.13.2 — 2026-09-26
 

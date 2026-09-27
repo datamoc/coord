@@ -746,6 +746,14 @@ export const OPS = {
             "task"
         ]
     },
+    "task_ack": {
+        "kind": "write",
+        "params": [
+            "session",
+            "task",
+            "note"
+        ]
+    },
     "task_cancel": {
         "kind": "write",
         "params": [
@@ -765,7 +773,8 @@ export const OPS = {
             "assign",
             "category",
             "after",
-            "client_id"
+            "client_id",
+            "human_ack"
         ]
     },
     "task_decline": {

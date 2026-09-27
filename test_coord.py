@@ -2264,6 +2264,27 @@ def ui_project_visibility_toggle():
     assert '"Hide"' in src and '"Show"' in src
 
 
+@check
+def human_ack_closes_in_one_click():
+    """T173: created with human_ack, a task shows a close button in the UI and any participant
+    closes it with task_ack - including work no live session can otherwise close."""
+    c, _ = fresh()
+    a = c.whoami("claude")["session_id"]; b = c.whoami("codex")["session_id"]
+    t = c.task_create(a, "Needs a human", human_ack=True)["task"]
+    assert c.task_get(t)["human_ack"] is True
+    assert [x for x in c.tasks() if x["task"] == t][0]["human_ack"] is True
+    plain = c.task_create(a, "Ordinary work")["task"]
+    assert c.task_get(plain)["human_ack"] is False
+    raises("bad_args", c.task_ack, b, plain)          # only a human-ack task closes this way
+    nxt = c.task_create(a, "After the human", after=[t])["task"]
+    c.task_accept(a, t)                               # stuck shape: assignee holds it...
+    assert c.task_ack(b, t, "looks good") == {"task": t, "status": "done"}   # ...anyone closes it
+    assert c.task_get(t)["status"] == "done" and not c.task_get(nxt)["blocked_by"]
+    raises("not_cancelable", c.task_ack, b, t)
+    src = (Path(__file__).parent / "coordination" / "ui" / "app.js").read_text()
+    assert "task_ack" in src and "human_ack" in src    # the UI's acknowledge/close button
+
+
 def main():
     failed = 0
     for fn in CHECKS:
